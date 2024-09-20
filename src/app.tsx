@@ -6,7 +6,7 @@ import { CreateClient } from "./pages/create-clients"
 
 const router = createBrowserRouter([
   {
-    path: "/clients",
+    path: "/",
     element: <CreateClient />
   }
 ])
