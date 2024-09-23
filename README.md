@@ -27,7 +27,7 @@ Este projeto foi desenvolvido para praticar o uso de **React** com **TypeScript*
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/seu-repositorio.git
+   git clone https://github.com/H3nr1q/formulario.git
 1. Clone o repositório:
    ```bash
    npm install
