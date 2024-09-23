@@ -12,23 +12,23 @@ import { isValidCPF, isValidCNPJ } from '../../utils/validator';
 
 const createClientFormSchema = z.object({
   name: z.string()
-  .min(1, "Campo nome obrigartório")
-  .refine((value) => {
-    const nameParts = value.trim().split(' ');
-    return nameParts.length > 1 && nameParts[1] !== '';
-  }, {
-    message: 'O nome deve conter pelo menos um sobrenome',
-  }),
+    .min(1, "Campo nome obrigartório")
+    .refine((value) => {
+      const nameParts = value.trim().split(' ');
+      return nameParts.length > 1 && nameParts[1] !== '';
+    }, {
+      message: 'O nome deve conter pelo menos um sobrenome',
+    }),
   email: z.string()
     .min(1, 'E-mail é obrigatório')
     .email('E-mail inválido'),
-  cep: z.string().min(1,'CEP Obrigatório'),
+  zipCode: z.string().min(1,'CEP Obrigatório'),
   address: z.string().min(1, "Endereço obrigatório"),
   number: z.string().refine((value) => {
     return value.trim() !== '' || value === 'SN';
-  }, {
-    message: 'O número da casa é obrigatório ou use "SN" para Sem Número',
-  }),
+    }, {
+      message: 'O número da casa é obrigatório ou use "SN" para Sem Número',
+    }),
   neighborhood: z.string().min(1, "Bairro obrigatório"),
   local: z.string().min(1, "Cidade obrigatório"),
   complement: z.string(),
@@ -46,7 +46,21 @@ const createClientFormSchema = z.object({
 type CreateClienteFormData  = z.infer<typeof createClientFormSchema>
 
 export function CreateClient(){
-  const uf = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+  const [stateSelected, setStateSelected] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [name, setName] = useState ('');
+  const [cnpj, setCnpj] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [complement, setComplement] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [local, setLocal] = useState('');
+  const [nameEnterprise, setNameEnterprise] = useState('');
+  const [fantasy ,setFantasy] = useState('');
+  const [email, setEmail] = useState('');
+  const [number, setNumber] = useState('');
+  const [disabled, setDisabled] = useState(false);
   const stateOptions = [
     { value: 'AC', label: 'AC' },
     { value: 'AL', label: 'AL' },
@@ -76,22 +90,7 @@ export function CreateClient(){
     { value: 'SE', label: 'SE' },
     { value: 'TO', label: 'TO' },
   ];
-  const [stateSelected, setStateSelected] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [name, setName] = useState ('');
-  const [cnpj, setCnpj] = useState('');
-  const [cep, setCep] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [complement, setComplement] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
-  const [local, setLocal] = useState('');
-  const [nameEnterprise, setNameEnterprise] = useState('');
-  const [fantasy ,setFantasy] = useState('');
-  const [email, setEmail] = useState('');
-  const [number, setNumber] = useState('');
-  const [disabled, setDisabled] = useState(false);
- 
+
   const handleStateChange = (selectedOption: any) => {
     setStateSelected(selectedOption ? selectedOption.value : '');
   };
@@ -104,24 +103,24 @@ export function CreateClient(){
 
   const changeCpf = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(event.target.value);
-    setValue("cpf", event.target.value)
+    setValue("cpf", event.target.value , {shouldValidate: true})
   };
 
   const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value.toUpperCase());
-    setValue("name", event.target.value.toUpperCase())
+    setValue("name", event.target.value.toUpperCase() , {shouldValidate: true})
   };
 
   const changeCnpj = (event: React.ChangeEvent<HTMLInputElement>) => {
     let cnpjSerching = event.target.value
     cnpjSerching = cnpjSerching.replace(/\./g, '').replace(/\//g, '').replace(/-/g, '');
     setCnpj(cnpjSerching);
-    setValue("cnpj", cnpjSerching)
+    setValue("cnpj", cnpjSerching, {shouldValidate: true})
   };
 
   const changeZipCode = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setCep(event.target.value);
-    setValue("cep", cep)
+    setZipCode(event.target.value);
+    setValue("zipCode", zipCode, {shouldValidate: true})
   };
 
   const changeNameEnterprise = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,6 +137,7 @@ export function CreateClient(){
 
   const changeAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(event.target.value.toUpperCase());
+    setValue("address", event.target.value)
   };
 
   const changeComplement = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,6 +146,7 @@ export function CreateClient(){
 
   const changeNumer = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNumber(event.target.value? event.target.value.toUpperCase(): "SN");
+    setValue("number", event.target.value? event.target.value.toUpperCase(): "SN", {shouldValidate: true} )
   };
 
   const changeNeighborhood = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,19 +157,20 @@ export function CreateClient(){
     setLocal(event.target.value.toUpperCase());
   };
 
-  const searchZipCode = async (cep: string) => {
+  const searchZipCode = async (zipCode: string) => {
     try {
-      const response = await apiSearchZipCode.get(`/${cep}/json/`);
-      setCep(response.data.cep);
-      setValue("cep", response.data.cep)
+      zipCode = zipCode.replace(/\D/g, '');
+      const response = await apiSearchZipCode.get(`/${zipCode}/json/`);
+      setZipCode(response.data.cep);
       setAddress(response.data.logradouro.toUpperCase());
-      setValue("address", response.data.logradouro.toUpperCase());
       setNeighborhood(response.data.bairro.toUpperCase());
-      setValue("neighborhood", response.data.bairro.toUpperCase());
       setComplement(response.data.complemento.toUpperCase());
       setLocal(response.data.localidade.toUpperCase());
-      setValue("local", response.data.localidade.toUpperCase())
       setStateSelected(response.data.uf);
+      setValue("zipCode", response.data.cep, {shouldValidate: true})
+      setValue("address", response.data.logradouro.toUpperCase(), {shouldValidate: true});
+      setValue("neighborhood", response.data.bairro.toUpperCase(), {shouldValidate: true});
+      setValue("local", response.data.localidade.toUpperCase(), {shouldValidate: true})
       setDisabled(true)
       
     } catch (error) {
@@ -177,8 +179,8 @@ export function CreateClient(){
     };
 
   const handleBlurZipCode = () => {
-    if(cep.length === 9){
-      searchZipCode(cep)
+    if(zipCode.length === 9){
+      searchZipCode(zipCode)
     }
   }
 
@@ -191,12 +193,18 @@ export function CreateClient(){
         setFantasy(response.data.fantasia);
         setEmail(response.data.email);
         setPhone(response.data.telefone);
-        setCep(response.data.cep);
+        setZipCode(response.data.cep);
+        searchZipCode(response.data.cep)
         setAddress(response.data.logradouro);
         setNumber(response.data.numero)
         setComplement(response.data.complemento);
         setLocal(response.data.municipio);
         setStateSelected(response.data.uf);
+
+        setValue("email", response.data.email, {shouldValidate: true})
+        setValue("address", response.data.address, {shouldValidate: true})
+        setValue("number", response.data.number, {shouldValidate: true})
+        setValue("local", response.data.municipio, {shouldValidate: true})
 
       } catch (error) {
         console.log('Erro ao buscar CNPJ');
@@ -223,13 +231,13 @@ export function CreateClient(){
   });
 
 
-  function createClient(data: CreateClienteFormData) {
+  function createClientForm(data:any) {
     setOutuput(JSON.stringify(data, null, 2));
   }
 
   return (
     <div className="h-screen flex items-center justify-center bg-black bg-pattern bg-no-repeat bg-center shadow-shape gap-3">
-      <form onSubmit={handleSubmit(createClient)} className='space-y-3'>
+      <form onSubmit={handleSubmit(createClientForm)} className='space-y-3'>
         <div className="flex items-center justify-between">
           <h2 className="text-3xl text-zinc-400 font-semibold">Cadastro de Cliente</h2>
         </div>
@@ -301,17 +309,17 @@ export function CreateClient(){
           <div className="flex items-center gap-2 flex-1">
             <Locate className='text-zinc-400 size-5'/>
             <InputMask
-              {...register("cep")}
+              {...register("zipCode")}
               mask="99999-999"
               placeholder="CEP"
               onChange={changeZipCode}
               onBlur={handleBlurZipCode}
-              value={cep}
+              value={zipCode}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>
         </div>
-        {errors.cep && <span className="text-lime-300 px-3">{errors.cep.message}</span>}
+        {errors.zipCode && <span className="text-lime-300 px-3">{errors.zipCode.message}</span>}
         <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg  flex items-center justify-between gap-3'>
           <div className="flex items-center gap-2 flex-[4]">
             <House className='text-zinc-400 size-5'/>
