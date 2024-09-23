@@ -47,3 +47,10 @@ Após iniciar o projeto, por padrão o tipo de cliente **Pessoa Jurídica** esta
 - **Campo de CEP**: Além de ser preenchido automaticamente quando o CNPJ é consultado, o CEP pode ser editado manualmente. Ao digitar um novo CEP e remover o foco do campo, a aplicação fará uma nova busca utilizando a API **ViaCEP** para atualizar o endereço correspondente.
 
 Essas funcionalidades visam melhorar a usabilidade e agilizar o processo de cadastro, garantindo que os dados sejam preenchidos automaticamente sempre que possível.
+
+-------------------------
+## Como contribuir
+
+- Faça um fork do projeto.
+- Crie uma branch para a nova feature (e.g. feature/novafuncionalidade).
+- Envie um pull request para revisão.
