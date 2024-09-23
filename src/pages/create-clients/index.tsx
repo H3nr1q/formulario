@@ -1,12 +1,84 @@
-import { Factory, Hotel, House, Map, HousePlus, Locate, Mail, Phone, UserPlus, Mailbox, PlusCircle } from "lucide-react"
-import { SetStateAction, useState } from "react";
+import { House, Map, HousePlus, Locate, Mail, Phone, Mailbox, Plus } from "lucide-react"
+import { useState } from "react";
 import InputMask from 'react-input-mask';
 import { apiSearchCnpj, apiSearchZipCode } from "../../libs/axios";
+import { EnterprisePerson } from "./enterprise-person";
+import { SimplePerson } from "./simple-person";
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver} from "@hookform/resolvers/zod"
+import Select from 'react-select';
+import { isValidCPF, isValidCNPJ } from '../../utils/validator';
+
+const createClientFormSchema = z.object({
+  name: z.string()
+  .min(1, "Campo nome obrigartório")
+  .refine((value) => {
+    const nameParts = value.trim().split(' ');
+    return nameParts.length > 1 && nameParts[1] !== '';
+  }, {
+    message: 'O nome deve conter pelo menos um sobrenome',
+  }),
+  email: z.string()
+    .min(1, 'E-mail é obrigatório')
+    .email('E-mail inválido'),
+  cep: z.string().min(1,'CEP Obrigatório'),
+  address: z.string().min(1, "Endereço obrigatório"),
+  number: z.string().refine((value) => {
+    return value.trim() !== '' || value === 'SN';
+  }, {
+    message: 'O número da casa é obrigatório ou use "SN" para Sem Número',
+  }),
+  neighborhood: z.string().min(1, "Bairro obrigatório"),
+  local: z.string().min(1, "Cidade obrigatório"),
+  complement: z.string(),
+  stateSelected: z.string().min(1, "Selecione uma UF"),
+  cpf: z.string()
+    .refine(isValidCPF, {
+      message: 'CPF inválido',
+    }),
+  cnpj: z.string()
+    .refine(isValidCNPJ, {
+      message: 'CNPJ inválido',
+    }),
+})
+
+type CreateClienteFormData  = z.infer<typeof createClientFormSchema>
 
 export function CreateClient(){
   const uf = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+  const stateOptions = [
+    { value: 'AC', label: 'AC' },
+    { value: 'AL', label: 'AL' },
+    { value: 'AP', label: 'AP' },
+    { value: 'AM', label: 'AM' },
+    { value: 'BA', label: 'BA' },
+    { value: 'CE', label: 'CE' },
+    { value: 'DF', label: 'DF' },
+    { value: 'ES', label: 'ES' },
+    { value: 'GO', label: 'GO' },
+    { value: 'MA', label: 'MA' },
+    { value: 'MT', label: 'MT' },
+    { value: 'MS', label: 'MS' },
+    { value: 'MG', label: 'MG' },
+    { value: 'PA', label: 'PA' },
+    { value: 'PB', label: 'PB' },
+    { value: 'PR', label: 'PR' },
+    { value: 'PE', label: 'PE' },
+    { value: 'PI', label: 'PI' },
+    { value: 'RJ', label: 'RJ' },
+    { value: 'RN', label: 'RN' },
+    { value: 'RS', label: 'RS' },
+    { value: 'RO', label: 'RO' },
+    { value: 'RR', label: 'RR' },
+    { value: 'SC', label: 'SC' },
+    { value: 'SP', label: 'SP' },
+    { value: 'SE', label: 'SE' },
+    { value: 'TO', label: 'TO' },
+  ];
   const [stateSelected, setStateSelected] = useState('');
   const [cpf, setCpf] = useState('');
+  const [name, setName] = useState ('');
   const [cnpj, setCnpj] = useState('');
   const [cep, setCep] = useState('');
   const [phone, setPhone] = useState('');
@@ -14,17 +86,14 @@ export function CreateClient(){
   const [complement, setComplement] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [local, setLocal] = useState('');
-  const [name, setName] = useState('');
+  const [nameEnterprise, setNameEnterprise] = useState('');
   const [fantasy ,setFantasy] = useState('');
   const [email, setEmail] = useState('');
   const [number, setNumber] = useState('');
-
-  const handleStateChange = (e: { target: { value: SetStateAction<string>; }; }) => {
-    setStateSelected(e.target.value);
-  };
-
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
+  const [disabled, setDisabled] = useState(false);
+ 
+  const handleStateChange = (selectedOption: any) => {
+    setStateSelected(selectedOption ? selectedOption.value : '');
   };
   
   const [typePerson, setTypePerson] = useState<'juridica' | 'fisica'>('juridica');
@@ -35,20 +104,28 @@ export function CreateClient(){
 
   const changeCpf = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(event.target.value);
+    setValue("cpf", event.target.value)
+  };
+
+  const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value.toUpperCase());
+    setValue("name", event.target.value.toUpperCase())
   };
 
   const changeCnpj = (event: React.ChangeEvent<HTMLInputElement>) => {
     let cnpjSerching = event.target.value
     cnpjSerching = cnpjSerching.replace(/\./g, '').replace(/\//g, '').replace(/-/g, '');
     setCnpj(cnpjSerching);
+    setValue("cnpj", cnpjSerching)
   };
 
   const changeZipCode = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCep(event.target.value);
+    setValue("cep", cep)
   };
 
-  const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value);
+  const changeNameEnterprise = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNameEnterprise(event.target.value);
   };
 
   const changeFantasy = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,28 +136,40 @@ export function CreateClient(){
     setEmail(event.target.value);
   };
 
+  const changeAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setAddress(event.target.value.toUpperCase());
+  };
+
   const changeComplement = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setComplement(event.target.value);
+    setComplement(event.target.value.toUpperCase());
   };
 
   const changeNumer = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNumber(event.target.value);
+    setNumber(event.target.value? event.target.value.toUpperCase(): "SN");
   };
 
   const changeNeighborhood = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNeighborhood(event.target.value);
+    setNeighborhood(event.target.value.toUpperCase());
+  };
+
+  const changeLocal = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLocal(event.target.value.toUpperCase());
   };
 
   const searchZipCode = async (cep: string) => {
     try {
       const response = await apiSearchZipCode.get(`/${cep}/json/`);
-      
       setCep(response.data.cep);
+      setValue("cep", response.data.cep)
       setAddress(response.data.logradouro.toUpperCase());
+      setValue("address", response.data.logradouro.toUpperCase());
       setNeighborhood(response.data.bairro.toUpperCase());
+      setValue("neighborhood", response.data.bairro.toUpperCase());
       setComplement(response.data.complemento.toUpperCase());
       setLocal(response.data.localidade.toUpperCase());
-      setStateSelected(response.data.uf)
+      setValue("local", response.data.localidade.toUpperCase())
+      setStateSelected(response.data.uf);
+      setDisabled(true)
       
     } catch (error) {
         console.log('Erro ao buscar CEP');
@@ -98,7 +187,7 @@ export function CreateClient(){
       const response = await apiSearchCnpj.get(`v1/cnpj/${cnpj}`,{
         headers: {Accept: 'application/json'}
       });
-        setName(response.data.nome);
+        setNameEnterprise(response.data.nome);
         setFantasy(response.data.fantasia);
         setEmail(response.data.email);
         setPhone(response.data.telefone);
@@ -124,9 +213,23 @@ export function CreateClient(){
     setPhone(event.target.value);
   };
 
+  const [output, setOutuput] = useState('');
+  const { 
+    register, 
+    handleSubmit,
+    setValue, 
+    formState: {errors} } = useForm<CreateClienteFormData>({
+    resolver: zodResolver(createClientFormSchema)
+  });
+
+
+  function createClient(data: CreateClienteFormData) {
+    setOutuput(JSON.stringify(data, null, 2));
+  }
+
   return (
     <div className="h-screen flex items-center justify-center bg-black bg-pattern bg-no-repeat bg-center shadow-shape gap-3">
-      <form className='space-y-3'>
+      <form onSubmit={handleSubmit(createClient)} className='space-y-3'>
         <div className="flex items-center justify-between">
           <h2 className="text-3xl text-zinc-400 font-semibold">Cadastro de Cliente</h2>
         </div>
@@ -148,86 +251,47 @@ export function CreateClient(){
             /> Pessoa Juridica
           </div>
         </div>
-        <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
-          <div className="flex items-center gap-2 flex-1">
-            <PlusCircle className="size-5 text-zinc-400"/>
-            <InputMask
-              mask="999.999.999-99"
-              value={cpf}
-              onChange={changeCpf}
-              placeholder="CPF"
-              className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-            />
-          </div>
-        </div>
-        <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
-          <div className="flex items-center gap-2 flex-1">
-            <UserPlus className="size-5 text-zinc-400"/>
-            <input 
-              type="text" 
-              name="name"
-              placeholder="Digite nome"
-              className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-            />
-          </div>
-        </div>
-        <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
-          <div className="flex items-center gap-2 flex-1">
-            <PlusCircle className="size-5 text-zinc-400"/>
-            <InputMask
-              mask="99.999.999/9999-99"
-              value={cnpj}
-              onChange={changeCnpj}
-              onBlur={handleBlurCnpj}
-              placeholder="CNPJ"
-              className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-            />
-          </div>
-        </div>
-        <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
-          <div className="flex items-center gap-2 flex-1">
-            <Factory className="size-5 text-zinc-400"/>
-            <input 
-              type="text"
-              name="razao_social"
-              placeholder="Digite a Razao Social"
-              value={name}
-              className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-            />
-          </div>
-        </div>
-        <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
-          <div className="flex items-center gap-2 flex-1">
-            <Hotel className='text-zinc-400 size-5'/>
-            <input 
-              type="text"
-              name="fantasy_name"
-              placeholder="Digite nome fantasia"
-              value={fantasy ? fantasy : name}
-              className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-            />
-          </div>
-        </div>
+        {typePerson === "fisica" && (
+          <SimplePerson 
+          changeName={changeName}
+          changeCpf={changeCpf}
+          cpf={cpf}
+          name={name}
+          errors={errors}
+          register={register}
+          />
+        )}
+          {typePerson === "juridica" && (
+            <EnterprisePerson 
+            changeCnpj={changeCnpj}
+            cnpj={cnpj}
+            fantasy={fantasy}
+            handleBlurCnpj={handleBlurCnpj}
+            nameEnterprise={nameEnterprise}
+            register={register}
+            errors={errors}
+          />)}
         <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
           <div className="flex items-center gap-2 flex-1">
             <Mail className='text-zinc-400 size-5'/>
             <input 
+              {...register("email")}
               type="text"
-              name= "email"
               placeholder="E-mail"
-              value={email}
               onChange={changeEmail}
+              value={email}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>
         </div>
+        {errors.email && <span className="text-lime-300 px-3">{errors.email.message}</span>}
         <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-2'>
           <div className="flex items-center gap-2 flex-1">
             <Phone className='text-zinc-400 size-5'/>
             <InputMask
               mask="(99)99999-9999" 
-              value={phone}
               onChange={changePhone}
+              value={phone}
               placeholder="Telefone"
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
@@ -237,87 +301,118 @@ export function CreateClient(){
           <div className="flex items-center gap-2 flex-1">
             <Locate className='text-zinc-400 size-5'/>
             <InputMask
+              {...register("cep")}
               mask="99999-999"
-              value={cep}
+              placeholder="CEP"
               onChange={changeZipCode}
               onBlur={handleBlurZipCode}
-              name= "zip"
-              placeholder="CEP"
+              value={cep}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>
         </div>
+        {errors.cep && <span className="text-lime-300 px-3">{errors.cep.message}</span>}
         <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg  flex items-center justify-between gap-3'>
           <div className="flex items-center gap-2 flex-[4]">
             <House className='text-zinc-400 size-5'/>
             <input 
+              {...register("address")}
               type="text"
-              name= "endereco"
               placeholder="Endereço"
+              onChange={changeAddress}
               value={address}
+              disabled={disabled}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>
           <div className="flex items-center gap-2 flex-1">
             <Mailbox className='text-zinc-400 size-5'/>
               <input
+                {...register("number")}
                 type="text" 
-                name= "numero"
                 placeholder="SN"
-                value={number ? number : "SN" }
+                onChange={changeNumer}
+                value={number}
                 className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
-              />
+                />
           </div>
           <div className="flex items-center gap-2 flex-1">
             <HousePlus className='text-zinc-400 size-5'/>
             <input 
               type="text"
-              name= "complemento"
               placeholder="Complemento"
               onChange={changeComplement}
               value={complement}
+              disabled={disabled}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>        
         </div>
+        {errors.address && <span className="text-lime-300 px-3">{errors.address.message}</span>}
+        {errors.number && <span className="text-lime-300 px-3">{errors.number.message}</span>}
         <div className='h-14 px-4 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-between gap-2'>
           <div className="flex items-center gap-2 flex-[2]">
             <HousePlus className='text-zinc-400 size-5'/>
-            <input 
+            <input
+              {...register("neighborhood")} 
               type="text"
-              name= ""
               placeholder="Bairro"
+              onChange={changeNeighborhood}
               value={neighborhood}
+              disabled={disabled}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>        
           <div className="flex items-center gap-2 flex-1">
             <Map className='text-zinc-400 size-5'/>
-            <input 
+            <input
+              {...register("local")} 
               type="text"
-              name= "city"
               placeholder="Cidade"
+              onChange={changeLocal}
               value={local}
+              disabled={disabled}
               className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1"
             />
           </div>
-             <select
-                id="estado"
-                className={`bg-transparent text-lg outline-none flex-1 ${
-                  stateSelected ? 'text-zinc-400' : 'text-zinc-400'
-                }`}
-                value={stateSelected}
-                onChange={handleStateChange}
-              >
-                <option value="">Selecione</option>
-                {uf.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
+          <Select
+            options={stateOptions}
+            value={stateOptions.find(opt => opt.value === stateSelected)}
+            onInputChange={handleStateChange}
+            placeholder="Selecione"
+            isSearchable
+            classNamePrefix="select"
+            isDisabled={disabled}
+            noOptionsMessage={() => 'UF não encontrada'}
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                backgroundColor: 'transparent',
+                border: '1px solid #e5e7eb',
+                borderRadius: '0.375rem',
+              }),
+              menu: (provided) => ({
+                ...provided,
+                backgroundColor: '#ffffff',
+              }),
+              singleValue: (provided) => ({
+                ...provided,
+                color: '#e5e7eb',
+              }),
+            }}
+          />
         </div>
+        {errors.neighborhood && <span className="text-lime-300 px-3">{errors.neighborhood.message}</span>}
+        {errors.local && <span className="text-lime-300 px-3">{errors.local.message}</span>}
+      <button className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2 font-bold flex items-center justify-center gap-2 hover:bg-lime-400 w-full h-11">
+        <Plus className="sizen-5" />
+          Salvar cliente
+      </button>
+      <div className="flex justify-around text-lime-300">
+        <pre>{output}</pre>
+      </div>
       </form>
+      
     </div>
   )
 }
