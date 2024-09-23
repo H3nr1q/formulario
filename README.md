@@ -4,8 +4,6 @@ Este projeto foi desenvolvido para praticar o uso de **React** com **TypeScript*
 
 ## Tecnologias Utilizadas
 
-## Tecnologias Utilizadas
-
 - **React + TypeScript**: para a criação da interface e manipulação de estados.
 - **React Hook Form**: gerenciamento de formulários de maneira otimizada.
 - **Zod**: para validação de schemas dentro do React Hook Form.
