@@ -4,7 +4,6 @@ import InputMask from 'react-input-mask';
 interface EnterprisePersonProps{
   cnpj: string
   changeCnpj: (event: React.ChangeEvent<HTMLInputElement>) => void
-  handleBlurCnpj: () => void
   nameEnterprise: string
   fantasy: string
   register: any
@@ -14,7 +13,6 @@ interface EnterprisePersonProps{
 export function EnterprisePerson({
   cnpj,
   changeCnpj,
-  handleBlurCnpj,
   fantasy,
   nameEnterprise,
   register,
@@ -29,7 +27,6 @@ export function EnterprisePerson({
           mask="99.999.999/9999-99"
           value={cnpj}
           onChange={changeCnpj}
-          onBlur={handleBlurCnpj}
           placeholder="CNPJ"
           className="bg-transparent text-lg text-zinc-100 placeholder-zinc-400 outline-none flex-1" />
       </div>

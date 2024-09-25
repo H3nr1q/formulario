@@ -1,5 +1,5 @@
 import { House, Map, HousePlus, Locate, Mail, Phone, Mailbox, Plus } from "lucide-react"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputMask from 'react-input-mask';
 import { apiSearchCnpj, apiSearchZipCode } from "../../libs/axios";
 import { EnterprisePerson } from "./enterprise-person";
@@ -103,12 +103,10 @@ export function CreateClient(){
 
   const changeCpf = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(event.target.value);
-    setValue("cpf", event.target.value , {shouldValidate: true})
   };
 
   const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value.toUpperCase());
-    setValue("name", event.target.value.toUpperCase() , {shouldValidate: true})
   };
 
   const changeCnpj = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,28 +198,16 @@ export function CreateClient(){
         setComplement(response.data.complemento);
         setLocal(response.data.municipio);
         setStateSelected(response.data.uf);
-
-        setValue("email", response.data.email, {shouldValidate: true})
-        setValue("address", response.data.address, {shouldValidate: true})
-        setValue("number", response.data.number, {shouldValidate: true})
-        setValue("local", response.data.municipio, {shouldValidate: true})
-
       } catch (error) {
         console.log('Erro ao buscar CNPJ');
       }
     };
-
-  const handleBlurCnpj = () => {
-    if(cnpj.length === 14){
-      searchCnpj(cnpj)
-    }
-  }
   
   const changePhone = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(event.target.value);
   };
 
-  const [output, setOutuput] = useState('');
+  const [output, setOutput] = useState('');
   const { 
     register, 
     handleSubmit,
@@ -231,13 +217,36 @@ export function CreateClient(){
   });
 
 
-  function createClientForm(data:any) {
-    setOutuput(JSON.stringify(data, null, 2));
+  function createClientForm(data:CreateClienteFormData) {
+    console.log("🚀 ~ createClientForm ~ data:", data)
+    setOutput(JSON.stringify(data, null, 2));
   }
+
+  const onSubmit = (data: CreateClienteFormData) => {
+    console.log(data);
+  };
+
+  useEffect(() => {
+    if (cnpj.length === 14) {
+      searchCnpj(cnpj);
+    }
+    else{
+      return
+    }
+  }, [cnpj]);
+
+  useEffect(() => {
+    if (cnpj.length !== "__.___.___/____-__") {
+      setValue("email", email, { shouldValidate: true });
+      setValue("address", address, { shouldValidate: true });
+      setValue("number", number, {shouldValidate: true})
+      setValue("local", local, {shouldValidate: true})
+  }
+  }, [email, address, number, local]);
 
   return (
     <div className="h-screen flex items-center justify-center bg-black bg-pattern bg-no-repeat bg-center shadow-shape gap-3">
-      <form onSubmit={handleSubmit(createClientForm)} className='space-y-3'>
+      <form onSubmit={handleSubmit(onSubmit)} className='space-y-3'>
         <div className="flex items-center justify-between">
           <h2 className="text-3xl text-zinc-400 font-semibold">Cadastro de Cliente</h2>
         </div>
@@ -274,7 +283,6 @@ export function CreateClient(){
             changeCnpj={changeCnpj}
             cnpj={cnpj}
             fantasy={fantasy}
-            handleBlurCnpj={handleBlurCnpj}
             nameEnterprise={nameEnterprise}
             register={register}
             errors={errors}
@@ -412,7 +420,7 @@ export function CreateClient(){
         </div>
         {errors.neighborhood && <span className="text-lime-300 px-3">{errors.neighborhood.message}</span>}
         {errors.local && <span className="text-lime-300 px-3">{errors.local.message}</span>}
-      <button className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2 font-bold flex items-center justify-center gap-2 hover:bg-lime-400 w-full h-11">
+      <button type="submit" className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2 font-bold flex items-center justify-center gap-2 hover:bg-lime-400 w-full h-11">
         <Plus className="sizen-5" />
           Salvar cliente
       </button>
