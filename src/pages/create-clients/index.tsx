@@ -236,12 +236,10 @@ export function CreateClient(){
   }, [cnpj]);
 
   useEffect(() => {
-    if (cnpj.length !== "__.___.___/____-__") {
       setValue("email", email, { shouldValidate: true });
       setValue("address", address, { shouldValidate: true });
       setValue("number", number, {shouldValidate: true})
       setValue("local", local, {shouldValidate: true})
-  }
   }, [email, address, number, local]);
 
   return (
