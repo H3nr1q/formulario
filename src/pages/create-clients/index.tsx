@@ -12,7 +12,7 @@ import { isValidCPF, isValidCNPJ } from '../../utils/validator';
 
 const createClientFormSchema = z.object({
   name: z.string()
-    .min(1, "Campo nome obrigartório")
+    .min(1, "Campo nome obrigatório")
     .refine((value) => {
       const nameParts = value.trim().split(' ');
       return nameParts.length > 1 && nameParts[1] !== '';
@@ -121,14 +121,6 @@ export function CreateClient(){
     setValue("zipCode", zipCode, {shouldValidate: true})
   };
 
-  const changeNameEnterprise = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNameEnterprise(event.target.value);
-  };
-
-  const changeFantasy = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFantasy(event.target.value);
-  };
-
   const changeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
   };
@@ -215,12 +207,6 @@ export function CreateClient(){
     formState: {errors} } = useForm<CreateClienteFormData>({
     resolver: zodResolver(createClientFormSchema)
   });
-
-
-  function createClientForm(data:CreateClienteFormData) {
-    console.log("🚀 ~ createClientForm ~ data:", data)
-    setOutput(JSON.stringify(data, null, 2));
-  }
 
   const onSubmit = (data: CreateClienteFormData) => {
     console.log(data);
@@ -422,9 +408,6 @@ export function CreateClient(){
         <Plus className="sizen-5" />
           Salvar cliente
       </button>
-      <div className="flex justify-around text-lime-300">
-        <pre>{output}</pre>
-      </div>
       </form>
       
     </div>
